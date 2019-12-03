@@ -68,26 +68,25 @@ def get_lines(directions):
     return lines
 
 
-# w1 = "R75,D30,R83,U83,L12,D49,R71,U7,L72"
-# w2 = "U62,R66,U55,R34,D71,R55,D58,R83"
-
-# w1 = "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51"
-# w2 = "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7"
-
 lines1 = get_lines(w1)
 lines2 = get_lines(w2)
-for l in lines2:
-    print(l)
 
 o = Point(0, 0)
 dist = sys.maxsize
-
+step1 = 0
+step2 = 0
+steps = []
 for line1 in lines1:
+    step2 = 0
     for line2 in lines2:
         i = line1.intersect(line2)
         if i != None:
-            d = i.dist(o)
-            if d < dist:
-                dist = d
+            step1 += line1.a.dist(i)
+            step2 += line2.a.dist(i)
+            steps.append(step1 + step2)
+        else:
+            step2 += line2.a.dist(line2.b)
+    step1 += line1.a.dist(line1.b)
 
-print(dist)
+
+print(min(steps))
