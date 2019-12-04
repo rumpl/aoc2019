@@ -16,11 +16,15 @@ def is_password(p):
         f = s
 
     good = False
+    has_two = False
+
     for n in m.values():
+        if n == 2:
+            has_two = True
         if n >= 2:
             good = True
 
-    return good
+    return good and has_two
 
 
 total = 0
