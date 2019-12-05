@@ -2,7 +2,6 @@ class Alarm:
     def __init__(self, input):
         self.input = input
         self.pc = 0
-        self.mode = 'p'
 
     def get(self, pos):
         m = self.modes.pop(0)
@@ -30,12 +29,50 @@ class Alarm:
 
     def read(self):
         val = input("value:")
-        self.input[self.input[self.pc + 1]] = int(val)
+        self.set(self.pc + 1, int(val))
         self.pc += 2
 
     def pp(self):
-        print(self.get(self.pc + 1))
+        print('pp:', self.get(self.pc + 1))
         self.pc += 2
+
+    def jit(self):
+        a = self.get(self.pc + 1)
+        b = self.get(self.pc + 2)
+        if a != 0:
+            self.pc = b
+        else:
+            self.pc += 3
+
+    def jif(self):
+        a = self.get(self.pc + 1)
+        b = self.get(self.pc + 2)
+        if a == 0:
+            self.pc = b
+        else:
+            self.pc += 3
+
+    def lt(self):
+        a = self.get(self.pc + 1)
+        b = self.get(self.pc + 2)
+        c = self.input[self.pc + 3]
+        if a < b:
+            self.input[c] = 1
+        else:
+            self.input[c] = 0
+
+        self.pc += 4
+
+    def eq(self):
+        a = self.get(self.pc + 1)
+        b = self.get(self.pc + 2)
+        c = self.input[self.pc + 3]
+        if a == b:
+            self.input[c] = 1
+        else:
+            self.input[c] = 0
+
+        self.pc += 4
 
     def g(self, l, n):
         if n < 0:
@@ -52,11 +89,15 @@ class Alarm:
             [1, 0, 0, 0],
             [2, 0, 0, 0],
             [3, 0],
-            [4, 0]
+            [4, 0],
+            [5, 0, 0, 0],
+            [6, 0, 0, 0],
+            [7, 0, 0, 0],
+            [8, 0, 0, 0]
         ]
         if op == 99:
             return [99]
-        if op <= 4:
+        if op <= 8:
             return ops[op]
 
         o = str(op)
@@ -76,6 +117,14 @@ class Alarm:
                 self.read()
             elif opc == 4:
                 self.pp()
+            elif opc == 5:
+                self.jit()
+            elif opc == 6:
+                self.jif()
+            elif opc == 7:
+                self.lt()
+            elif opc == 8:
+                self.eq()
             elif opc == 99:
                 break
 
