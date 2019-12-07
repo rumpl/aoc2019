@@ -26,12 +26,6 @@ class Alarm:
         self.set(self.pc + 3, a * b)
         self.pc += 4
 
-    def read(self, inputs):
-        val = inputs.pop(0)
-        self.set(self.pc + 1, val)
-        self.pc += 2
-        return inputs
-
     def pp(self):
         val = self.get(self.pc + 1)
         self.pc += 2
@@ -104,21 +98,22 @@ class Alarm:
         o = str(op)
         return [op % 10, self.g(o, len(o) - 3), self.g(o, len(o) - 4), self.g(o, len(o) - 4)]
 
-    def run(self, inputs):
-        out = 'NONE'
+    def run(self):
         while True:
             op = self.opcode()
             opc = op[0]
             self.modes = op[1:]
-
             if opc == 1:
                 self.add()
             elif opc == 2:
                 self.mul()
             elif opc == 3:
-                inputs = self.read(inputs)
+                val = yield
+                self.set(self.pc + 1, int(val))
+                self.pc += 2
             elif opc == 4:
                 out = self.pp()
+                yield out
             elif opc == 5:
                 self.jit()
             elif opc == 6:
@@ -130,26 +125,42 @@ class Alarm:
             elif opc == 99:
                 break
 
-        return out
+        yield None
 
+def feedback(inp, phases):
+    # setup with initial values
+    programs = [a.run() for a in [
+            Alarm(inp.copy()),
+            Alarm(inp.copy()),
+            Alarm(inp.copy()),
+            Alarm(inp.copy()),
+            Alarm(inp.copy())
+        ]
+    ]
 
-def run_program(program, amplifiers):
+    for i in range(0, len(programs)):
+        next(programs[i])
+        programs[i].send(phases[i])
+
     phase = 0
+    while True:
+        for i in range(0, len(programs)):
+            last = phase
+            try:
+                phase = programs[i].send(phase)
+                next(programs[i])
+            except StopIteration:
+                return last
 
-    for amplifier in amplifiers:
-        b = Alarm(program)
-        phase = b.run([amplifier, phase])
 
-    return phase
-
+# Don't judge me...
+inputs = permutations([5,6,7,8,9])
 inp = [3,8,1001,8,10,8,105,1,0,0,21,38,55,68,93,118,199,280,361,442,99999,3,9,1002,9,2,9,101,5,9,9,102,4,9,9,4,9,99,3,9,101,3,9,9,1002,9,3,9,1001,9,4,9,4,9,99,3,9,101,4,9,9,102,3,9,9,4,9,99,3,9,102,2,9,9,101,4,9,9,102,2,9,9,1001,9,4,9,102,4,9,9,4,9,99,3,9,1002,9,2,9,1001,9,2,9,1002,9,5,9,1001,9,2,9,1002,9,4,9,4,9,99,3,9,101,1,9,9,4,9,3,9,102,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,101,1,9,9,4,9,3,9,101,1,9,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,99,3,9,1001,9,1,9,4,9,3,9,1001,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,1002,9,2,9,4,9,3,9,102,2,9,9,4,9,99,3,9,1002,9,2,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,101,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,2,9,4,9,99,3,9,1001,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,1,9,4,9,99,3,9,102,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,1001,9,1,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,101,2,9,9,4,9,99]
 
 max_out = 0
-# Don't judge me...
-inputs = permutations([0,1,2,3,4])
-
+# phase = 0
 for i in inputs:
-    out = run_program(inp, i)
+    out = feedback(inp, i)
     if max_out < out:
         max_out = out
 
