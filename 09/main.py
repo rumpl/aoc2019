@@ -6,7 +6,7 @@ class Alarm:
         self.input = []
         for i in input:
             self.input.append(i)
-        for i in range(0, 101):
+        for i in range(0, 10000):
             self.input.append(0)
         self.pc = 0
         self.base = 0
